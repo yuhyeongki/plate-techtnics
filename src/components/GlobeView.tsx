@@ -124,8 +124,8 @@ export const GlobeView: React.FC<GlobeViewProps> = ({ onSelectBoundary, onNaviga
 
   useEffect(() => {
     if (!mountRef.current) return;
-    const width = mountRef.current.clientWidth;
-    const height = mountRef.current.clientHeight;
+    const width = mountRef.current.clientWidth || 800;
+    const height = mountRef.current.clientHeight || 600;
 
     // 1. Scene & Camera
     const scene = new THREE.Scene();
@@ -135,12 +135,17 @@ export const GlobeView: React.FC<GlobeViewProps> = ({ onSelectBoundary, onNaviga
     camera.position.set(0, 0, 260);
     cameraRef.current = camera;
 
-    // 2. Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    mountRef.current.appendChild(renderer.domElement);
-    rendererRef.current = renderer;
+    // 2. Renderer with safe WebGL fallback
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'default' });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      mountRef.current.appendChild(renderer.domElement);
+      rendererRef.current = renderer;
+    } catch {
+      return;
+    }
 
     // 3. Globe Container Group
     const globeGroup = new THREE.Group();

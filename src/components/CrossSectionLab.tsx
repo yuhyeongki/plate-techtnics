@@ -16,6 +16,11 @@ export const CrossSectionLab: React.FC<CrossSectionLabProps> = ({
   const animFrameRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(performance.now());
   const soundCooldownRef = useRef<number>(0);
+  const animTimeRef = useRef<number>(simState.time);
+
+  useEffect(() => {
+    animTimeRef.current = simState.time;
+  }, [simState.time]);
 
   // Particles for magma plumes and eruptions
   const particlesRef = useRef<{ x: number; y: number; vx: number; vy: number; life: number; maxLife: number; color: string; size: number }[]>([]);
@@ -46,21 +51,17 @@ export const CrossSectionLab: React.FC<CrossSectionLabProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let localTime = simState.time;
-
     const render = (now: number) => {
       const dt = Math.min((now - lastTimeRef.current) / 1000, 0.1);
       lastTimeRef.current = now;
 
-      // Handle continuous playback
+      // Handle continuous playback using internal animation ref to prevent React re-render lockups
       if (simState.isPlaying) {
-        // Speed scaling based on user speed setting and plate speed in cm/yr
         const speedMultiplier = simState.speed * (simState.plateSpeedCmPerYear / 5);
-        localTime = (localTime + dt * 12 * speedMultiplier) % 100;
-        onUpdateSimState(prev => ({ ...prev, time: localTime }));
-      } else {
-        localTime = simState.time;
+        animTimeRef.current = (animTimeRef.current + dt * 12 * speedMultiplier) % 100;
       }
+
+      const localTime = animTimeRef.current;
 
       const width = canvas.width;
       const height = canvas.height;
@@ -913,7 +914,11 @@ export const CrossSectionLab: React.FC<CrossSectionLabProps> = ({
     ctx.lineWidth = 1;
 
     ctx.beginPath();
-    ctx.roundRect(labelX - boxW / 2, labelY - boxH / 2, boxW, boxH, 4);
+    if (typeof (ctx as unknown as { roundRect?: Function }).roundRect === 'function') {
+      ctx.roundRect(labelX - boxW / 2, labelY - boxH / 2, boxW, boxH, 4);
+    } else {
+      ctx.rect(labelX - boxW / 2, labelY - boxH / 2, boxW, boxH);
+    }
     ctx.fill();
     ctx.stroke();
 

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from 'react';
+import React, { useState, Component, ErrorInfo, ReactNode } from 'react';
 import { GlobeView } from './components/GlobeView';
 import { CrossSectionLab } from './components/CrossSectionLab';
 import { LabControls } from './components/LabControls';
@@ -11,10 +11,57 @@ import { ConceptGuide } from './components/ConceptGuide';
 import { QuizModal } from './components/QuizModal';
 import { BoundaryType, SimState } from './types/tectonics';
 import { BOUNDARIES_DATA } from './data/tectonicsData';
-import { Globe, Layers, BookOpen, Award, RotateCcw, ExternalLink, Sparkles } from 'lucide-react';
+import { Globe, Layers, BookOpen, Award, RotateCcw, RefreshCw } from 'lucide-react';
 import { soundFx } from './utils/audio';
 
-export default function App() {
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Plate Tectonics Lab Error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6 text-center font-sans">
+          <div className="max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4">
+            <h2 className="text-lg font-bold text-white">시뮬레이션 로딩 중 오류가 발생했습니다</h2>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              브라우저 그래픽 가속 또는 렌더링 초기화에 문제가 있었습니다. 아래 버튼을 눌러 새로고침해 주세요.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="py-2 px-4 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold rounded-lg text-xs inline-flex items-center gap-1.5 transition-colors"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>새로고침</span>
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function MainApp() {
   const [activeView, setActiveView] = useState<'globe' | 'crossSection'>('crossSection');
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isQuizOpen, setIsQuizOpen] = useState(false);
@@ -288,5 +335,13 @@ export default function App() {
         onClose={() => setIsQuizOpen(false)}
       />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <MainApp />
+    </ErrorBoundary>
   );
 }
