@@ -1,0 +1,6 @@
+{
+  "name": "판구조론 시뮬레이션 실험실 (Plate Tectonics Lab)",
+  "description": "3D 지구본과 정밀 2D 단면 시뮬레이션을 통해 발산형, 수렴형(섭입·충돌), 보존형 판 경계와 베니오프대 지진, 화산, 판 밀도 변화를 탐구하는 가상 실험실",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
